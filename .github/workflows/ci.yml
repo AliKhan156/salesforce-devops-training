@@ -1,0 +1,25 @@
+name: Salesforce CI
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  validate-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Salesforce CLI
+        run: npm install --global @salesforce/cli
+
+      - name: Authenticate to Salesforce Org
+        run: |
+          echo "${{ secrets.SF_AUTH_URL }}" > ./SF_AUTH_URL.txt
+          sf org login sfdx-url --sfdx-url-file ./SF_AUTH_URL.txt --alias ciOrg --set-default
+          rm ./SF_AUTH_URL.txt
+
+      - name: Deploy and Run Tests
+        run: sf project deploy start --source-dir force-app --test-level RunLocalTests --target-org ciOrg
